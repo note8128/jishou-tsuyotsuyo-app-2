@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ネムリズム - 睡眠・起床管理</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="phone">
+    <!-- ステータスバー -->
+    <div class="statusbar">
+      <span id="sb-time">--:--</span>
+      <span class="sb-icons">📶 🔋</span>
+    </div>
+
+    <main class="screens">
+      <!-- ================= ホーム画面 ================= -->
+      <section class="screen active" id="screen-home">
+        <header class="screen-header">
+          <div>
+            <p class="greeting" id="greeting">こんばんは</p>
+            <h1 class="clock" id="home-clock">--:--</h1>
+            <p class="date" id="home-date"></p>
+          </div>
+          <button class="icon-btn" id="btn-settings" title="目標設定">⚙️</button>
+        </header>
+
+        <!-- 次のアラーム・就寝ボタン -->
+        <div class="card next-alarm">
+          <div class="next-alarm-info">
+            <span class="label">次のアラーム</span>
+            <strong id="next-alarm-time">--:--</strong>
+            <span class="sub" id="next-alarm-sub">アラームなし</span>
+          </div>
+          <div class="bedtime-box">
+            <span class="label">おすすめ就寝</span>
+            <strong id="rec-bedtime">--:--</strong>
+            <span class="sub" id="rec-bedtime-sub"></span>
+          </div>
+        </div>
+        <button class="btn-sleep" id="btn-sleep">🌙 おやすみモードを開始</button>
+
+        <!-- 睡眠スコア -->
+        <div class="card">
+          <div class="card-title">
+            <h2>睡眠分析</h2>
+            <div class="seg" id="range-seg">
+              <button class="active" data-range="7">7日</button>
+              <button data-range="14">14日</button>
+            </div>
+          </div>
+          <div class="score-row">
+            <div class="score-ring">
+              <svg viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="52" class="ring-bg"/>
+                <circle cx="60" cy="60" r="52" class="ring-fg" id="score-ring-fg"/>
+              </svg>
+              <div class="score-text">
+                <strong id="score-value">--</strong>
+                <span>睡眠スコア</span>
+              </div>
+            </div>
+            <div class="stats">
+              <div class="stat"><span>平均睡眠</span><strong id="stat-avg">--</strong></div>
+              <div class="stat"><span>睡眠負債</span><strong id="stat-debt">--</strong></div>
+              <div class="stat"><span>就寝の規則性</span><strong id="stat-regular">--</strong></div>
+              <div class="stat"><span>平均目覚め度</span><strong id="stat-wake">--</strong></div>
+            </div>
+          </div>
+          <div class="chart" id="sleep-chart"></div>
+          <div class="chart-legend">
+            <span><i class="lg lg-ok"></i>目標達成</span>
+            <span><i class="lg lg-short"></i>不足</span>
+            <span><i class="lg lg-goal"></i>目標 <b id="goal-label"></b></span>
+          </div>
+          <h3 class="sub-title">就寝・起床リズム</h3>
+          <div class="chart" id="rhythm-chart"></div>
+          <div class="advice" id="advice"></div>
+          <button class="btn-text" id="btn-add-log">＋ 睡眠記録を手動で追加</button>
+        </div>
+
+        <!-- 今日の予定 -->
+        <div class="card">
+          <div class="card-title">
+            <h2>今日の予定</h2>
+            <button class="btn-text" data-goto="schedule">すべて見る ›</button>
+          </div>
+          <ul class="today-list" id="today-list"></ul>
+        </div>
+      </section>
+
+      <!-- ================= アラーム画面 ================= -->
+      <section class="screen" id="screen-alarm">
+        <header class="screen-header">
+          <h1>アラーム</h1>
+          <button class="icon-btn primary" id="btn-add-alarm" title="追加">＋</button>
+        </header>
+        <p class="hint">クイズに正解しないと止まらないアラームで、二度寝を防ぎます。</p>
+        <ul class="alarm-list" id="alarm-list"></ul>
+
+        <div class="card">
+          <div class="card-title"><h2>最近の起床記録</h2></div>
+          <ul class="wake-history" id="wake-history"></ul>
+        </div>
+      </section>
+
+      <!-- ================= スケジュール表 ================= -->
+      <section class="screen" id="screen-schedule">
+        <header class="screen-header">
+          <h1>スケジュール</h1>
+          <button class="icon-btn primary" id="btn-add-event" title="予定を追加">＋</button>
+        </header>
+        <div class="week-nav">
+          <button class="icon-btn small" id="week-prev">‹</button>
+          <span id="week-label"></span>
+          <button class="icon-btn small" id="week-next">›</button>
+        </div>
+        <div class="sleep-warn" id="sleep-warn" hidden></div>
+        <div class="timetable-wrap">
+          <div class="timetable" id="timetable"></div>
+        </div>
+        <div class="cat-legend" id="cat-legend"></div>
+        <div class="card">
+          <div class="card-title"><h2 id="day-detail-title">予定</h2></div>
+          <ul class="today-list" id="day-detail"></ul>
+        </div>
+      </section>
+    </main>
+
+    <!-- 下部ナビ -->
+    <nav class="tabbar">
+      <button class="tab active" data-goto="home"><span>🏠</span>ホーム</button>
+      <button class="tab" data-goto="alarm"><span>⏰</span>アラーム</button>
+      <button class="tab" data-goto="schedule"><span>📅</span>スケジュール</button>
+    </nav>
+
+    <!-- ===== モーダル: アラーム編集 ===== -->
+    <div class="sheet-backdrop" id="alarm-sheet" hidden>
+      <form class="sheet" id="alarm-form">
+        <div class="sheet-head">
+          <button type="button" class="btn-text" data-close>キャンセル</button>
+          <h2 id="alarm-sheet-title">アラームを追加</h2>
+          <button type="submit" class="btn-text strong">保存</button>
+        </div>
+        <input type="time" class="time-input" name="time" required value="06:30">
+        <label class="field">ラベル<input type="text" name="label" placeholder="例：平日の起床" maxlength="20"></label>
+        <div class="field">繰り返し
+          <div class="day-picker" id="day-picker"></div>
+        </div>
+        <div class="field">クイズの種類
+          <div class="seg wide" data-name="quizType">
+            <button type="button" data-v="math" class="active">🧮 計算</button>
+            <button type="button" data-v="memory">🔢 数字記憶</button>
+            <button type="button" data-v="mix">🎲 ミックス</button>
+          </div>
+        </div>
+        <div class="field">難易度
+          <div class="seg wide" data-name="difficulty">
+            <button type="button" data-v="easy">かんたん</button>
+            <button type="button" data-v="normal" class="active">ふつう</button>
+            <button type="button" data-v="hard">むずかしい</button>
+          </div>
+        </div>
+        <label class="field row">問題数<span><input type="range" name="count" min="1" max="5" value="3"> <b id="count-val">3</b>問</span></label>
+        <label class="field row">スヌーズ回数上限<span><input type="range" name="snooze" min="0" max="3" value="1"> <b id="snooze-val">1</b>回</span></label>
+        <button type="button" class="btn-danger" id="btn-delete-alarm" hidden>このアラームを削除</button>
+      </form>
+    </div>
+
+    <!-- ===== モーダル: 予定編集 ===== -->
+    <div class="sheet-backdrop" id="event-sheet" hidden>
+      <form class="sheet" id="event-form">
+        <div class="sheet-head">
+          <button type="button" class="btn-text" data-close>キャンセル</button>
+          <h2 id="event-sheet-title">予定を追加</h2>
+          <button type="submit" class="btn-text strong">保存</button>
+        </div>
+        <label class="field">タイトル<input type="text" name="title" required placeholder="例：1限 英語" maxlength="20"></label>
+        <label class="field">曜日
+          <select name="day">
+            <option value="0">月曜日</option><option value="1">火曜日</option><option value="2">水曜日</option>
+            <option value="3">木曜日</option><option value="4">金曜日</option><option value="5">土曜日</option>
+            <option value="6">日曜日</option>
+          </select>
+        </label>
+        <div class="field two">
+          <label>開始<input type="time" name="start" required value="09:00"></label>
+          <label>終了<input type="time" name="end" required value="10:30"></label>
+        </div>
+        <label class="field">カテゴリ<select name="cat" id="cat-select"></select></label>
+        <label class="field check"><input type="checkbox" name="weekly" checked> 毎週繰り返す</label>
+        <button type="button" class="btn-danger" id="btn-delete-event" hidden>この予定を削除</button>
+      </form>
+    </div>
+
+    <!-- ===== モーダル: 睡眠記録追加 ===== -->
+    <div class="sheet-backdrop" id="log-sheet" hidden>
+      <form class="sheet" id="log-form">
+        <div class="sheet-head">
+          <button type="button" class="btn-text" data-close>キャンセル</button>
+          <h2>睡眠記録を追加</h2>
+          <button type="submit" class="btn-text strong">保存</button>
+        </div>
+        <label class="field">起床日<input type="date" name="date" required></label>
+        <div class="field two">
+          <label>就寝（前日）<input type="time" name="bed" required value="23:30"></label>
+          <label>起床<input type="time" name="wake" required value="07:00"></label>
+        </div>
+      </form>
+    </div>
+
+    <!-- ===== モーダル: 目標設定 ===== -->
+    <div class="sheet-backdrop" id="settings-sheet" hidden>
+      <form class="sheet" id="settings-form">
+        <div class="sheet-head">
+          <button type="button" class="btn-text" data-close>キャンセル</button>
+          <h2>睡眠目標</h2>
+          <button type="submit" class="btn-text strong">保存</button>
+        </div>
+        <label class="field row">目標睡眠時間<span><input type="range" name="goal" min="5" max="10" step="0.5" value="7.5"> <b id="goal-val">7.5</b>時間</span></label>
+        <label class="field row">寝付くまでの時間<span><input type="range" name="latency" min="0" max="60" step="5" value="15"> <b id="latency-val">15</b>分</span></label>
+        <button type="button" class="btn-danger" id="btn-reset">デモデータに戻す</button>
+      </form>
+    </div>
+
+    <!-- ===== おやすみモード ===== -->
+    <div class="overlay night" id="sleep-overlay" hidden>
+      <div class="stars"></div>
+      <p class="ov-label">おやすみモード</p>
+      <h1 class="ov-clock" id="sleep-clock">--:--</h1>
+      <p id="sleep-elapsed">就寝から 0分</p>
+      <p class="ov-sub" id="sleep-next"></p>
+      <div class="ov-actions">
+        <button class="btn-ghost" id="btn-wake-manual">起床する（手動）</button>
+        <button class="btn-ghost" id="btn-cancel-sleep">キャンセル</button>
+      </div>
+    </div>
+
+    <!-- ===== アラーム鳴動 + クイズ ===== -->
+    <div class="overlay ringing" id="ring-overlay" hidden>
+      <p class="ov-label" id="ring-label">アラーム</p>
+      <h1 class="ov-clock" id="ring-clock">--:--</h1>
+      <div class="quiz-card">
+        <div class="quiz-progress" id="quiz-progress"></div>
+        <p class="quiz-type" id="quiz-type"></p>
+        <p class="quiz-q" id="quiz-q"></p>
+        <div class="quiz-answer" id="quiz-answer">&nbsp;</div>
+        <div class="numpad" id="numpad"></div>
+      </div>
+      <button class="btn-ghost" id="btn-snooze">スヌーズ（5分）</button>
+    </div>
+
+    <!-- ===== おはよう結果 ===== -->
+    <div class="overlay morning" id="result-overlay" hidden>
+      <p class="ov-label">おはようございます ☀️</p>
+      <h1 class="ov-big" id="result-duration">--</h1>
+      <p id="result-detail"></p>
+      <div class="result-grid">
+        <div><span>目覚め度</span><strong id="result-wake">--</strong></div>
+        <div><span>クイズ所要</span><strong id="result-time">--</strong></div>
+        <div><span>スヌーズ</span><strong id="result-snooze">--</strong></div>
+      </div>
+      <p class="ov-sub" id="result-msg"></p>
+      <button class="btn-primary" id="btn-result-close">ホームへ</button>
+    </div>
+
+    <div class="toast" id="toast" hidden></div>
+  </div>
+
+  <p class="demo-note">※ モックアップ（データはブラウザの localStorage に保存されます）</p>
+  <script src="js/app.js"></script>
+</body>
+</html>
